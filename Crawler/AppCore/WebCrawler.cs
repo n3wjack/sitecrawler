@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -125,21 +126,28 @@ namespace Crawler.AppCore
             }
         }
 
-        private async Task<List<string>> ExtractLinks(HttpResponseMessage result)
+        private async Task<List<string>> ExtractLinks(HttpResponseMessage response)
         {
             var resultLinks = new List<string>();
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(await result.Content.ReadAsStringAsync());
-            var links = doc.DocumentNode.SelectNodes("//a");
-
-            if (links != null)
+            if (response.StatusCode == HttpStatusCode.MovedPermanently)
             {
-                foreach (var link in links)
+                resultLinks.Add(response.Headers.Location.AbsoluteUri);
+            }
+            else
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(await response.Content.ReadAsStringAsync());
+                var links = doc.DocumentNode.SelectNodes("//a");
+
+                if (links != null)
                 {
-                    if (_linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) && !LinkAlreadyCrawled(href))
+                    foreach (var link in links)
                     {
-                        resultLinks.Add(href);
+                        if (_linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) && !LinkAlreadyCrawled(href))
+                        {
+                            resultLinks.Add(href);
+                        }
                     }
                 }
             }
