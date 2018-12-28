@@ -137,7 +137,7 @@ namespace Crawler.AppCore
             {
                 foreach (var link in links)
                 {
-                    if (_linkValidator.TryValidateLink(link.GetAttributeValue("href", null), out var href) && !LinkAlreadyCrawled(href))
+                    if (_linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) && !LinkAlreadyCrawled(href))
                     {
                         resultLinks.Add(href);
                     }

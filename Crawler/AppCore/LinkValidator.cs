@@ -11,15 +11,29 @@ namespace Crawler.AppCore
             _hostUri = hostUri;
         }
 
-        public bool TryValidateLink(string href, out string hrefout)
+        /// <summary>
+        /// Validates a given link to check if it is a valid internal link. 
+        /// If a link is external it will return false.
+        /// </summary>
+        /// <param name="href">The link to check.</param>
+        /// <param name="hrefout">The internal link, transformed to a full URL to be able to fetch it.</param>
+        /// <returns>True if the link is internal, false if external or invalid.</returns>
+        public bool TryValidateInternalLink(string href, out string hrefout)
         {
             hrefout = null;
 
             if (href == null)
-                return false;
-
-            if (href.StartsWith("//") || href.StartsWith("https") || href.StartsWith("http"))
             {
+                return false;
+            }
+
+            if (href.StartsWith("//") || href.StartsWith("https:") || href.StartsWith("http:"))
+            {
+                if (!Uri.IsWellFormedUriString(href, UriKind.RelativeOrAbsolute))
+                {
+                    return false;
+                }
+
                 var hrefUri = new Uri(href);
 
                 if (hrefUri.Host.Equals(_hostUri.Host))
