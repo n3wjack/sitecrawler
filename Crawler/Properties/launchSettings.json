@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Crawler": {
+      "commandName": "Project",
+      "commandLineArgs": "--outputfile c:\\temp\\test.csv --url https://localhost:44339/"
+    }
+  }
+}
