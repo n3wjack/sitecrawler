@@ -6,9 +6,9 @@ The goal is to have a command line based web crawler to allow crawling a site an
 # Todo
 
 To get a basic version:
-- Add a timer to stop crawling after x seconds
+- Add the referer as info to the link & output CSV, so you can see on what page there is a broken link.
 - Add a way to log info/debug level stuff instead of using console.writeline
-- Make the webcrawler class async (?)
+- Make the webcrawler class async because it's fancy (?)
 
 # To Fix
 
