@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crawler
@@ -39,13 +40,17 @@ namespace Crawler
             var crawler = new WebCrawler(new WebCrawlConfiguration { Uri = new Uri(appSettings.Url) });
             crawler.LinkCrawled += Crawler_LinkCrawled;
 
-            Console.CancelKeyPress += (sender, e) => 
+            Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                Console.WriteLine("*** Stopping crawler **** ");
-                crawler.Stop();
-                Console.WriteLine("*** Crawler stop signaled **** ");
+                StopCrawler(crawler);
             };
+
+            if (appSettings.Minutes != 0)
+            {
+                Console.WriteLine($"Stopping crawling after {appSettings.Minutes} minutes.");
+                var timer = new Timer(TimerCallback, crawler, appSettings.Minutes * 60 * 1000, Timeout.Infinite);
+            }
 
             _startTime = DateTime.UtcNow;
             var results = crawler.Start();
@@ -57,6 +62,21 @@ namespace Crawler
             }
 
             Console.ReadLine();
+        }
+
+        private static void TimerCallback(object state)
+        {
+            StopCrawler(state as WebCrawler);
+        }
+
+        private static void StopCrawler(WebCrawler crawler)
+        {
+            var c = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("*** Stopping crawler **** ");
+            crawler.Stop();
+            Console.WriteLine("*** Crawler stop signaled **** ");
+            Console.ForegroundColor = c;
         }
 
         private static void ShowHelp()
@@ -82,7 +102,7 @@ namespace Crawler
         {
             Console.WriteLine("Writing to csv file");
             Console.WriteLine($"   Results : {results.Count}");
-            results.ToList().ForEach(r => System.IO.File.AppendAllText(filename, $"\"{r.Url}\";{r.StatusCode}\n"));
+            results.ToList().ForEach(r => File.AppendAllText(filename, $"\"{r.Url}\";{r.StatusCode}\n"));
         }
     }
 }

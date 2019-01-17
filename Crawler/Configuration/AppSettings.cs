@@ -14,6 +14,7 @@ namespace Crawler.Configuration
 
         public string OutputFile { get; set; }
         public string Url { get; set; }
+        public int Minutes { get; set; } 
 
         public bool ShowHelp
         {

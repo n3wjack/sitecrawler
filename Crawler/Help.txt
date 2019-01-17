@@ -16,6 +16,7 @@ _\( )/_            /(_)\      .--'/()\'--.    | /  \ |   /(O)\
 Usage: dotnet crawler.dll [options]
 
 Options:
-	--url           The URL to crawl.
-	--outputfile   The CSV output file to create with the crawler results. (optional).
+	--url         The URL to crawl.
+	--outputfile  The CSV output file to create with the crawler results (optional).
+	--minutes     Time in minutes to crawl the given site (optional).
  
