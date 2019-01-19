@@ -34,6 +34,11 @@ namespace Crawler.AppCore
                     return false;
                 }
 
+                if (href.Contains("#"))
+                {
+                    return false;
+                }
+
                 var hrefUri = new Uri(href);
 
                 if (hrefUri.Host.Equals(_hostUri.Host))
