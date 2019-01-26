@@ -21,18 +21,26 @@ namespace Crawler.Tests
         [Fact]
         public async void WhenCallingBuildTwiceStatusCodeIsReset()
         {
-            var r = new HttpResponseMessageBuilder().RedirectsTo("foo").Build();
+            var r = new HttpResponseMessageBuilder().MovedTo("foo").Build();
             r = new HttpResponseMessageBuilder().Build();
 
             Assert.Equal(HttpStatusCode.OK, r.StatusCode);
         }
 
         [Fact]
-        public async void WhenRedirectingStatusCodeIsCorrect()
+        public async void WhenMovedToIsCalledStatusCodeIsCorrect()
         {
-            var r = new HttpResponseMessageBuilder().RedirectsTo("foo").Build();
+            var r = new HttpResponseMessageBuilder().MovedTo("foo").Build();
 
             Assert.Equal(HttpStatusCode.Moved, r.StatusCode);
+        }
+
+        [Fact]
+        public async void WhenRedirectToIsCalledStatusCodeIsCorrect()
+        {
+            var r = new HttpResponseMessageBuilder().RedirectTo("foo").Build();
+
+            Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);
         }
     }
 }

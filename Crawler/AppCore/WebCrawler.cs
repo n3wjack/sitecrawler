@@ -129,7 +129,7 @@ namespace Crawler.AppCore
         {
             var resultLinks = new List<string>();
 
-            if (response.StatusCode == HttpStatusCode.MovedPermanently)
+            if (IsRedirect(response.StatusCode))
             {
                 var redirectUri = response.Headers.Location?.AbsoluteUri;
                 if (redirectUri != null)
@@ -156,6 +156,14 @@ namespace Crawler.AppCore
             }
 
             return resultLinks;
+        }
+
+        private bool IsRedirect(HttpStatusCode statusCode)
+        {
+            return
+                statusCode == HttpStatusCode.PermanentRedirect ||
+                statusCode == HttpStatusCode.Redirect ||
+                statusCode == HttpStatusCode.Moved;
         }
     }
 }

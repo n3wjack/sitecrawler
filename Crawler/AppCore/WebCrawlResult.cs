@@ -4,6 +4,6 @@
     {
         public bool Success { get; set; }
         
-        // TODO: delete this or use it.
+        // TODO: delete WebCrawlResult or use it.
     }
 }

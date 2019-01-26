@@ -10,6 +10,11 @@ namespace Crawler.Tests
 {
     public class HttpResponseMessageBuilder
     {
+        private static class Headers
+        {
+            public const string Location = "Location";
+        }
+
         private StringBuilder _sb = new StringBuilder();
         private Dictionary<string, string> _headers = new Dictionary<string, string>();
         private HttpStatusCode _statusCode;
@@ -48,12 +53,22 @@ namespace Crawler.Tests
             return httpResponse;
         }
 
-        public HttpResponseMessageBuilder RedirectsTo(string redirectUrl)
+        public HttpResponseMessageBuilder MovedTo(string redirectUrl)
         {
-            _statusCode = HttpStatusCode.MovedPermanently;
+            _statusCode = HttpStatusCode.Moved;
             _writeBody = false;
 
-            WithHeader("Location", redirectUrl);
+            WithHeader(Headers.Location, redirectUrl);
+
+            return this;
+        }
+
+        public HttpResponseMessageBuilder RedirectTo(string redirectUrl)
+        {
+            _statusCode = HttpStatusCode.Redirect;
+            _writeBody = false;
+
+            WithHeader(Headers.Location, redirectUrl);
 
             return this;
         }

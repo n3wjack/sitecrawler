@@ -58,6 +58,38 @@ namespace Crawler.Tests
         }
     }
 
+    public class WhenCrawlingSiteWithPermanentRedirect : GivenAWebCrawler
+    {
+        public WhenCrawlingSiteWithPermanentRedirect()
+        {
+            var sut = CreateSut();
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/redirect", "redirected link").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.MovedTo("https://foobar.com/redirect-target").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect-target", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.Build()));
+
+            Result = sut.Start();
+        }
+
+        [Fact]
+        public void ThenTheRedirectIsFollowed()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/redirect-target");
+        }
+
+        [Fact]
+        public void ThenThereAreThreeResults()
+        {
+            Assert.Equal(3, Result.Count);
+        }
+    }
+
     public class WhenCrawlingSiteWithRedirect : GivenAWebCrawler
     {
         public WhenCrawlingSiteWithRedirect()
@@ -69,7 +101,7 @@ namespace Crawler.Tests
                 .Returns(Task.FromResult(builder.AddLink("/redirect", "redirected link").Build()));
 
             HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.RedirectsTo("https://foobar.com/redirect-target").Build()));
+                .Returns(Task.FromResult(builder.RedirectTo("https://foobar.com/redirect-target").Build()));
 
             HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect-target", It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(builder.Build()));
