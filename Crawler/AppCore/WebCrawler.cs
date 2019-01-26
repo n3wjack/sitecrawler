@@ -13,9 +13,9 @@ namespace Crawler.AppCore
     public class WebCrawler
     {
         private ConcurrentDictionary<string, LinkCrawlResult> _linkCrawlResults = new ConcurrentDictionary<string, LinkCrawlResult>();
-        private WebCrawlConfiguration _configuration;
-        private ILinkValidator _linkValidator;
-        private Func<IHttpClient> _httpClientFactory;
+        private readonly WebCrawlConfiguration _configuration;
+        private readonly ILinkValidator _linkValidator;
+        private readonly Func<IHttpClient> _httpClientFactory;
         private ParallelOptions _parallelOptions;
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -113,6 +113,7 @@ namespace Crawler.AppCore
                         Parallel.ForEach(links, _parallelOptions, (link) => CrawlLink(link, token));
                     }
                 }
+                // todo : handle TaskCancellationException
                 catch (OperationCanceledException e)
                 {
                     Console.WriteLine("Cancelled : " + e.Message);

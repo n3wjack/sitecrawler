@@ -19,11 +19,11 @@ namespace Crawler.Tests
             var uri = new Uri("https://foobar.com/");
             return new WebCrawler(
                 new WebCrawlConfiguration { Uri = uri },
-                testHttpClientFactory,
+                TestHttpClientFactory,
                 new LinkValidator(uri));
         }
 
-        private IHttpClient testHttpClientFactory()
+        private IHttpClient TestHttpClientFactory()
         {
             return HttpClientMock.Object;
         }

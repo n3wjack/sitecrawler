@@ -12,8 +12,10 @@ namespace Crawler.Infrastructure
 
         public HttpClientAdapter()
         {
-            var clientHandler = new HttpClientHandler();
-            clientHandler.AllowAutoRedirect = false;
+            var clientHandler = new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            };
             _client = new HttpClient(clientHandler);
         }
 

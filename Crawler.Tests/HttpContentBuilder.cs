@@ -43,8 +43,10 @@ namespace Crawler.Tests
                 _sb.Clear();
             }
 
-            var httpResponse = new HttpResponseMessage(_statusCode);
-            httpResponse.Content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(_sb.ToString())));
+            var httpResponse = new HttpResponseMessage(_statusCode)
+            {
+                Content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(_sb.ToString())))
+            };
 
             _headers.ToList().ForEach(kv => httpResponse.Headers.Add(kv.Key, kv.Value));
             

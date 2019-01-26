@@ -19,7 +19,7 @@ namespace Crawler.Tests
         }
 
         [Fact]
-        public async void WhenCallingBuildTwiceStatusCodeIsReset()
+        public void WhenCallingBuildTwiceStatusCodeIsReset()
         {
             var r = new HttpResponseMessageBuilder().MovedTo("foo").Build();
             r = new HttpResponseMessageBuilder().Build();
@@ -28,7 +28,7 @@ namespace Crawler.Tests
         }
 
         [Fact]
-        public async void WhenMovedToIsCalledStatusCodeIsCorrect()
+        public void WhenMovedToIsCalledStatusCodeIsCorrect()
         {
             var r = new HttpResponseMessageBuilder().MovedTo("foo").Build();
 
@@ -36,7 +36,7 @@ namespace Crawler.Tests
         }
 
         [Fact]
-        public async void WhenRedirectToIsCalledStatusCodeIsCorrect()
+        public void WhenRedirectToIsCalledStatusCodeIsCorrect()
         {
             var r = new HttpResponseMessageBuilder().RedirectTo("foo").Build();
 
