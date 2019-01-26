@@ -14,8 +14,8 @@ namespace Crawler.AppCore
     {
         private ConcurrentDictionary<string, LinkCrawlResult> _linkCrawlResults = new ConcurrentDictionary<string, LinkCrawlResult>();
         private WebCrawlConfiguration _configuration;
-        private LinkValidator _linkValidator;
-
+        private ILinkValidator _linkValidator;
+        private Func<IHttpClient> _httpClientFactory;
         private ParallelOptions _parallelOptions;
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -29,10 +29,11 @@ namespace Crawler.AppCore
             }
         }
 
-        public WebCrawler(WebCrawlConfiguration configuration)
+        public WebCrawler(WebCrawlConfiguration configuration, Func<IHttpClient> httpClientFactory, ILinkValidator linkValidator)
         {
             _configuration = configuration;
-            _linkValidator = new LinkValidator(configuration.Uri);
+            _linkValidator = linkValidator;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IList<LinkCrawlResult> Start()
@@ -96,10 +97,7 @@ namespace Crawler.AppCore
                 url = $"{_configuration.Uri.Scheme}://{_configuration.Uri.Host}{url}";
             }
 
-            var clientHandler = new HttpClientHandler();
-            clientHandler.AllowAutoRedirect = false;
-
-            using (var client = new HttpClient(clientHandler))
+            using (var client = _httpClientFactory())
             {
                 try
                 {
@@ -122,6 +120,7 @@ namespace Crawler.AppCore
                 catch (Exception ex)
                 {
                     Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");
+                    throw;
                 }
             }
         }
@@ -132,7 +131,11 @@ namespace Crawler.AppCore
 
             if (response.StatusCode == HttpStatusCode.MovedPermanently)
             {
-                resultLinks.Add(response.Headers.Location.AbsoluteUri);
+                var redirectUri = response.Headers.Location?.AbsoluteUri;
+                if (redirectUri != null)
+                {
+                    resultLinks.Add(redirectUri);
+                }
             }
             else
             {

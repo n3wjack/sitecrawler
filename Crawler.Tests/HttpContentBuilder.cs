@@ -1,0 +1,77 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Linq;
+
+namespace Crawler.Tests
+{
+    public class HttpResponseMessageBuilder
+    {
+        private StringBuilder _sb = new StringBuilder();
+        private Dictionary<string, string> _headers = new Dictionary<string, string>();
+        private HttpStatusCode _statusCode;
+        private bool _writeBody;
+
+        public HttpResponseMessageBuilder()
+        {
+            Initialize();
+        }
+
+        public HttpResponseMessageBuilder AddLink(string url, string text)
+        {
+            _sb.Append($"<a href=\"{url}\">{text}</a>");
+
+            return this;
+        }
+
+        public HttpResponseMessage Build()
+        {
+            if (_writeBody)
+            {
+                _sb.Append("</body></html>");
+            }
+            else
+            {
+                _sb.Clear();
+            }
+
+            var httpResponse = new HttpResponseMessage(_statusCode);
+            httpResponse.Content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(_sb.ToString())));
+
+            _headers.ToList().ForEach(kv => httpResponse.Headers.Add(kv.Key, kv.Value));
+            
+            Initialize();
+
+            return httpResponse;
+        }
+
+        public HttpResponseMessageBuilder RedirectsTo(string redirectUrl)
+        {
+            _statusCode = HttpStatusCode.MovedPermanently;
+            _writeBody = false;
+
+            WithHeader("Location", redirectUrl);
+
+            return this;
+        }
+
+        public HttpResponseMessageBuilder WithHeader(string name, string value)
+        {
+            _headers.Add(name, value);
+
+            return this;
+        }
+
+        private void Initialize()
+        {
+            _sb.Clear();
+            _sb.Append("<html><body>");
+            _headers.Clear();
+            _statusCode = HttpStatusCode.OK;
+            _writeBody = true;
+        }
+    }
+}

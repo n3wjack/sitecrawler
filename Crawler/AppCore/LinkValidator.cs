@@ -2,7 +2,7 @@
 
 namespace Crawler.AppCore
 {
-    public class LinkValidator
+    public class LinkValidator : ILinkValidator
     {
         private Uri _hostUri;
 

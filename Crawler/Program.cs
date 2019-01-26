@@ -1,5 +1,6 @@
 ﻿using Crawler.AppCore;
 using Crawler.Configuration;
+using Crawler.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Crawler
 {
@@ -37,7 +37,7 @@ namespace Crawler
             Console.WriteLine("Press ENTER to start crawling.");
             Console.ReadLine();
 
-            var crawler = new WebCrawler(new WebCrawlConfiguration { Uri = new Uri(appSettings.Url) });
+            var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration { Uri = new Uri(appSettings.Url) });
             crawler.LinkCrawled += Crawler_LinkCrawled;
 
             Console.CancelKeyPress += (sender, e) =>
