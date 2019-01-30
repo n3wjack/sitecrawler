@@ -56,6 +56,12 @@ namespace Crawler.Tests
         {
             Assert.Equal(2, Result.Count);
         }
+
+        [Fact]
+        public void ThenTheReferrerIsSetForTheTestLink()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/test" && r.ReferrerUrl == "https://foobar.com/");
+        }
     }
 
     public class WhenCrawlingSiteWithPermanentRedirect : GivenAWebCrawler

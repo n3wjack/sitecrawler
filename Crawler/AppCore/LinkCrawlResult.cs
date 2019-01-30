@@ -8,5 +8,6 @@ namespace Crawler.AppCore
         public string Url { get; set; }
         public HttpStatusCode StatusCode { get; set; }
         public List<string> Links { get; set; }
+        public string ReferrerUrl { get; internal set; }
     }
 }

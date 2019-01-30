@@ -102,7 +102,13 @@ namespace Crawler
         {
             Console.WriteLine("Writing to csv file");
             Console.WriteLine($"   Results : {results.Count}");
-            results.ToList().ForEach(r => File.AppendAllText(filename, $"\"{r.Url}\";{r.StatusCode}\n"));
+
+            if (File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
+
+            results.ToList().ForEach(r => File.AppendAllText(filename, $"\"{r.Url}\",{r.StatusCode},\"{r.ReferrerUrl}\"\n"));
         }
     }
 }

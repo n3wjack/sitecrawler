@@ -40,7 +40,7 @@ namespace Crawler.AppCore
         {
             SetOptions();
 
-            CrawlLink(_configuration.Uri.ToString(), _parallelOptions.CancellationToken);
+            CrawlLink(_configuration.Uri.ToString(), string.Empty, _parallelOptions.CancellationToken);
 
             return _linkCrawlResults.Values.ToList();
         }
@@ -75,9 +75,9 @@ namespace Crawler.AppCore
             _linkCrawlResults.TryAdd(crawlResult.Url, crawlResult);
         }
 
-        private void CrawlLink(string url, CancellationToken token)
+        private void CrawlLink(string url, string referrerUrl, CancellationToken token)
         {
-            var crawlResult = new LinkCrawlResult { Url = url };
+            var crawlResult = new LinkCrawlResult { Url = url, ReferrerUrl = referrerUrl };
 
             // Add an empty crawlresult to avoid other threads from also crawling the same url.
             if (!_linkCrawlResults.TryAdd(url, crawlResult))
@@ -110,7 +110,7 @@ namespace Crawler.AppCore
 
                     if (!token.IsCancellationRequested)
                     {
-                        Parallel.ForEach(links, _parallelOptions, (link) => CrawlLink(link, token));
+                        Parallel.ForEach(links, _parallelOptions, (link) => CrawlLink(link, url, token));
                     }
                 }
                 // todo : handle TaskCancellationException
