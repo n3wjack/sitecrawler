@@ -19,8 +19,7 @@ namespace Crawler.Tests
             var uri = new Uri("https://foobar.com/");
             return new WebCrawler(
                 new WebCrawlConfiguration { Uri = uri },
-                TestHttpClientFactory,
-                new LinkValidator(uri));
+                TestHttpClientFactory);
         }
 
         private IHttpClient TestHttpClientFactory()
@@ -40,6 +39,9 @@ namespace Crawler.Tests
                 .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
 
             HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/test2", "").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test2", It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(builder.Build()));
 
             Result = sut.Start();
@@ -54,7 +56,7 @@ namespace Crawler.Tests
         [Fact]
         public void ThenThereAreTwoResults()
         {
-            Assert.Equal(2, Result.Count);
+            Assert.Equal(3, Result.Count);
         }
 
         [Fact]
@@ -125,6 +127,48 @@ namespace Crawler.Tests
         public void ThenThereAreThreeResults()
         {
             Assert.Equal(3, Result.Count);
+        }
+    }
+
+    public class WhenCrawlingSiteWithLotsOfLinks : GivenAWebCrawler
+    {
+        private WebCrawler _sut;
+        private const int _links = 20;
+
+        public WhenCrawlingSiteWithLotsOfLinks()
+        {
+            _sut = CreateSut();
+
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLinks("/link-{0}", _links).Build()));
+
+            // Return some empty documents when one of those links is called.
+            for (var i = 0; i < _links; i++)
+            {
+                var url = $"https://foobar.com/link-{i}";
+
+                HttpClientMock.Setup(c => c.GetAsync(url, It.IsAny<CancellationToken>()))
+                    .Returns(Task.FromResult(builder.AddLinks("sublink-{0}", _links).Build()));
+
+                // Return an empty page for the sublinks
+                for (var j = 0; j < _links; j++)
+                {
+                    var sublinkurl = $"https://foobar.com/sublink-{j}";
+
+                    HttpClientMock.Setup(c => c.GetAsync(sublinkurl, It.IsAny<CancellationToken>()))
+                        .Returns(Task.FromResult(builder.Build()));
+                }
+            }
+        }
+
+        [Fact]
+        public void ThenAllLinksAreCrawled()
+        {
+            var result = _sut.Start();
+
+            Assert.Equal((_links * 2) + 1, result.Count);
         }
     }
 }

@@ -4,14 +4,15 @@
     ViewData["Title"] = "Home page";
 }
 
-<p>Test site to see if the crawler crawls correclty and doesn't crawl circular links indefinitely, or crashes on bad links</p>
+<p>Test site to see if the crawler crawls correctly and doesn't crawl circular links indefinitely, or crashes on bad links</p>
 
 <div class="row">
 
     <ul>
         <li><a href="subpage1">Subpage 1</a></li>
         <li><a href="subpage2">Subpage 2</a></li>
-        <li><a href="subpage2">Subpage 2 (again)</a></li>
+        <li><a href="subpage2/">Subpage 2, with trailing slash</a></li>
+        <li><a href="subfolder/foo">Page in subfolder</a></li>
         <li><a href="http://?a.bad.link.com/">a bad link</a></li>
     </ul>
 

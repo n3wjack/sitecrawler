@@ -13,7 +13,7 @@ namespace Crawler.AppCore
 
         /// <summary>
         /// Validates a given link to check if it is a valid internal link. 
-        /// If a link is external it will return false.
+        /// If the link is external it will return false.
         /// </summary>
         /// <param name="href">The link to check.</param>
         /// <param name="hrefout">The internal link, transformed to a full URL to be able to fetch it.</param>
@@ -51,6 +51,7 @@ namespace Crawler.AppCore
             if (Uri.TryCreate(href, UriKind.Relative, out var uri))
             {
                 hrefout = new Uri(_hostUri, href).ToString();
+
                 return true;
             }
 

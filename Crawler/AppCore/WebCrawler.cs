@@ -14,7 +14,6 @@ namespace Crawler.AppCore
     {
         private ConcurrentDictionary<string, LinkCrawlResult> _linkCrawlResults = new ConcurrentDictionary<string, LinkCrawlResult>();
         private readonly WebCrawlConfiguration _configuration;
-        private readonly ILinkValidator _linkValidator;
         private readonly Func<IHttpClient> _httpClientFactory;
         private ParallelOptions _parallelOptions;
         private CancellationTokenSource _cancellationTokenSource;
@@ -29,10 +28,9 @@ namespace Crawler.AppCore
             }
         }
 
-        public WebCrawler(WebCrawlConfiguration configuration, Func<IHttpClient> httpClientFactory, ILinkValidator linkValidator)
+        public WebCrawler(WebCrawlConfiguration configuration, Func<IHttpClient> httpClientFactory)
         {
             _configuration = configuration;
-            _linkValidator = linkValidator;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -102,7 +100,7 @@ namespace Crawler.AppCore
                 try
                 {
                     var response = client.GetAsync(url, token).Result;
-                    var links = ExtractLinks(response).Result.Distinct().ToList();
+                    var links = ExtractLinks(url, response).Result.Distinct().ToList();
 
                     crawlResult.Links = links;
                     crawlResult.StatusCode = response.StatusCode;
@@ -126,13 +124,13 @@ namespace Crawler.AppCore
             }
         }
 
-        private async Task<List<string>> ExtractLinks(HttpResponseMessage response)
+        private async Task<List<string>> ExtractLinks(string url, HttpResponseMessage response)
         {
             var resultLinks = new List<string>();
 
             if (IsRedirect(response.StatusCode))
             {
-                var redirectUri = response.Headers.Location?.AbsoluteUri;
+                var redirectUri = response.Headers.Location?.IsAbsoluteUri ?? false ? response.Headers.Location?.AbsoluteUri : null;
                 if (redirectUri != null)
                 {
                     resultLinks.Add(redirectUri);
@@ -148,7 +146,9 @@ namespace Crawler.AppCore
                 {
                     foreach (var link in links)
                     {
-                        if (_linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) && !LinkAlreadyCrawled(href))
+                        var linkValidator = new LinkValidator(new Uri(url));
+                        if (linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) 
+                            && !LinkAlreadyCrawled(href))
                         {
                             resultLinks.Add(href);
                         }

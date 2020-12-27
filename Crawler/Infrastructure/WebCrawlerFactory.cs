@@ -6,7 +6,7 @@ namespace Crawler.Infrastructure
     {
         public static WebCrawler Create(WebCrawlConfiguration configuration)
         {
-            return new WebCrawler(configuration, DefaultHttpClientFactory, new LinkValidator(configuration.Uri));
+            return new WebCrawler(configuration, DefaultHttpClientFactory);
         }
 
         private static IHttpClient DefaultHttpClientFactory()

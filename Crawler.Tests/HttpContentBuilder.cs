@@ -32,6 +32,17 @@ namespace Crawler.Tests
             return this;
         }
 
+        public HttpResponseMessageBuilder AddLinks(string linkFormat, int links)
+        {
+            for (var i = 0; i < links; i++)
+            {
+                var link = string.Format(linkFormat, i);
+                AddLink(link, link);
+            }
+
+            return this;
+        }
+
         public HttpResponseMessage Build()
         {
             if (_writeBody)

@@ -1,5 +1,6 @@
 ﻿using Crawler.AppCore;
 using Crawler.Configuration;
+using Crawler.Helpers;
 using Crawler.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -71,12 +72,9 @@ namespace Crawler
 
         private static void StopCrawler(WebCrawler crawler)
         {
-            var c = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("*** Stopping crawler **** ");
+            ColorConsole.WriteLine("*** Stopping crawler **** ", ConsoleColor.Yellow);
             crawler.Stop();
-            Console.WriteLine("*** Crawler stop signaled **** ");
-            Console.ForegroundColor = c;
+            ColorConsole.WriteLine("*** Crawler stop signaled **** ", ConsoleColor.Yellow);
         }
 
         private static void ShowHelp()
