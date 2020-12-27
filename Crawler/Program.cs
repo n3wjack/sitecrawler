@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 
@@ -93,7 +94,23 @@ namespace Crawler
             var duration = DateTime.UtcNow - _startTime;
             var linksPerSecond = duration.TotalSeconds == 0 ? 0 : _linksCrawled / duration.TotalSeconds;
 
-            Console.WriteLine($"-- Crawled: {crawlResult.Url}\n\t Result : {crawlResult.StatusCode}, Links: {crawlResult.Links.Count} - Total crawled: {_linksCrawled} in {duration} ({linksPerSecond} links/s) ");
+            ColorConsole.WriteLine(
+                $"-- Crawled: {crawlResult.Url}\n\t Result : {crawlResult.StatusCode}, Links: {crawlResult.Links.Count} - Total crawled: {_linksCrawled} in {duration} ({linksPerSecond} links/s) ",
+                GetColorForStatusCode(crawlResult.StatusCode));
+        }
+
+        private static ConsoleColor GetColorForStatusCode(HttpStatusCode statusCode)
+        {
+            switch (statusCode)
+            {
+                case HttpStatusCode.OK: 
+                    return ConsoleColor.Green;
+                case HttpStatusCode.InternalServerError:
+                case HttpStatusCode.BadRequest:
+                    return ConsoleColor.Red;
+                default: 
+                    return ConsoleColor.Yellow;
+            }
         }
 
         private static void WriteCsv(IList<LinkCrawlResult> results, string filename)

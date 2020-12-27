@@ -6,10 +6,9 @@ namespace Crawler.Helpers
     {
         public static void WriteLine(string text, ConsoleColor color)
         {
-            var currentColor = Console.ForegroundColor;
             Console.ForegroundColor = color;
             Console.WriteLine(text);
-            Console.ForegroundColor = currentColor;
+            Console.ResetColor();
         }
     }
 }

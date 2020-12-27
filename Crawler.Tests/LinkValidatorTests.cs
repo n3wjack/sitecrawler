@@ -73,12 +73,13 @@ namespace Crawler.Tests
         }
 
         [Theory]
-        [InlineData("https://foobar.net/#")]
-        [InlineData("https://foobar.net/#menu")]
-        [InlineData("https://foobar.net/foo/#menu")]
-        public void GivenAnAnchorLinkItShouldBeInvalid(string url)
+        [InlineData("https://foobar.net/#", "https://foobar.net/")]
+        [InlineData("https://foobar.net/#menu", "https://foobar.net/")]
+        [InlineData("https://foobar.net/foo/#menu", "https://foobar.net/foo/")]
+        public void GivenAnAnchorLinkItShouldBeValid(string url, string expectedFullUrl)
         {
-            Assert.False(ValidateUrl(url));
+            Assert.True(ValidateUrl(url, out string fullUrl));
+            Assert.Equal(expectedFullUrl, fullUrl);
         }
     }
 

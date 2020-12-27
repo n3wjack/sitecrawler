@@ -11,6 +11,18 @@ namespace Crawler.AppCore
             _hostUri = hostUri;
         }
 
+        private string RemoveHash(string href)
+        {
+            if (!href.Contains('#'))
+            {
+                return href;
+            } 
+            else
+            {
+                return href.Split('#')[0];
+            }
+        }
+
         /// <summary>
         /// Validates a given link to check if it is a valid internal link. 
         /// If the link is external it will return false.
@@ -27,14 +39,11 @@ namespace Crawler.AppCore
                 return false;
             }
 
+            href = RemoveHash(href);
+
             if (href.StartsWith("//") || href.StartsWith("https:") || href.StartsWith("http:"))
             {
                 if (!Uri.IsWellFormedUriString(href, UriKind.RelativeOrAbsolute))
-                {
-                    return false;
-                }
-
-                if (href.Contains("#"))
                 {
                     return false;
                 }
