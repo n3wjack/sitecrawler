@@ -62,8 +62,6 @@ namespace Crawler
             {
                 WriteCsv(results, appSettings.OutputFile);
             }
-
-            Console.ReadLine();
         }
 
         private static void TimerCallback(object state)

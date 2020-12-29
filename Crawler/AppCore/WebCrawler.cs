@@ -13,10 +13,13 @@ namespace Crawler.AppCore
     public class WebCrawler
     {
         private ConcurrentDictionary<string, LinkCrawlResult> _linkCrawlResults = new ConcurrentDictionary<string, LinkCrawlResult>();
+        private ConcurrentQueue<LinkToCrawl> _linksToCrawl = new ConcurrentQueue<LinkToCrawl>();
+        private Task[] _crawlTasks;
         private readonly WebCrawlConfiguration _configuration;
         private readonly Func<IHttpClient> _httpClientFactory;
         private ParallelOptions _parallelOptions;
         private CancellationTokenSource _cancellationTokenSource;
+        private bool _isFirstLink;
 
         public event EventHandler<LinkCrawlResult> LinkCrawled;
 
@@ -38,9 +41,55 @@ namespace Crawler.AppCore
         {
             SetOptions();
 
-            CrawlLink(_configuration.Uri.ToString(), string.Empty, _parallelOptions.CancellationToken);
+            var startUri = _configuration.Uri.ToString();
+
+            _isFirstLink = true;
+            _linksToCrawl.Enqueue(new LinkToCrawl { Url = startUri, Referrer = string.Empty });
+
+            _crawlTasks = Enumerable.Range(1, 10).Select(i => new Task(CrawlTaskAction, _cancellationTokenSource.Token)).ToArray();
+            _crawlTasks.ToList().ForEach(t => t.Start());
+
+            try
+            {
+                Task.WaitAll(_crawlTasks);
+                Console.WriteLine("**** Finished crawling ****");
+            }
+            catch (AggregateException ex)
+            {
+                Console.WriteLine("\n***** Exceptions ****\n");
+                ex.InnerExceptions.ToList().ForEach(e => Console.WriteLine(ex.Message));
+            }
 
             return _linkCrawlResults.Values.ToList();
+        }
+
+        private void CrawlTaskAction()
+        {
+            LinkToCrawl linkToCrawl;
+            int failedDequeues = 0;
+
+            do
+            {
+                if (_linksToCrawl.TryDequeue(out linkToCrawl))
+                {
+                    failedDequeues = 0;
+                    var linksToCrawl = CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
+                    linksToCrawl.ForEach(l => _linksToCrawl.Enqueue(l));
+                    _isFirstLink = false;
+                }
+                else
+                {
+                    if (!_isFirstLink)
+                    {
+                        failedDequeues++;
+                    }
+                    // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
+                    Console.WriteLine("=== Task waiting...");
+                    Thread.Sleep(1000);
+                }
+            } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);
+
+            Console.WriteLine("=== TASK STOPPED ===");
         }
 
         public void Stop()
@@ -55,11 +104,6 @@ namespace Crawler.AppCore
             _parallelOptions.CancellationToken = _cancellationTokenSource.Token;
         }
 
-        private bool LinkNotCrawledYet(string link)
-        {
-            return !_linkCrawlResults.ContainsKey(link);
-        }
-
         private bool LinkAlreadyCrawled(string link)
         {
             return _linkCrawlResults.ContainsKey(link);
@@ -68,12 +112,17 @@ namespace Crawler.AppCore
         private void AddCrawlResult(LinkCrawlResult crawlResult)
         {
             LinkCrawled?.Invoke(this, crawlResult);
-
-            // If it already exists, some thread beat us to it.
-            _linkCrawlResults.TryAdd(crawlResult.Url, crawlResult);
+            // AddOrUpdate because we added an empty result earlier to block the URL from being crawled by another thread.
+            _linkCrawlResults.AddOrUpdate(crawlResult.Url, crawlResult, (key, value) => crawlResult);
         }
 
-        private void CrawlLink(string url, string referrerUrl, CancellationToken token)
+        /// <summary>
+        /// Crawls a given link and returns a list of new found links to crawl.
+        /// </summary>
+        /// <param name="url">The URL of the link to crawl.</param>
+        /// <param name="referrerUrl">The referrer of the link.</param>
+        /// <returns>A list of links found.</returns>
+        private List<LinkToCrawl> CrawlLink(string url, string referrerUrl)
         {
             var crawlResult = new LinkCrawlResult { Url = url, ReferrerUrl = referrerUrl };
 
@@ -81,13 +130,7 @@ namespace Crawler.AppCore
             if (!_linkCrawlResults.TryAdd(url, crawlResult))
             {
                 Console.WriteLine("=== Already crawled " + url);
-                return;
-            }
-
-            if (token.IsCancellationRequested)
-            {
-                Console.WriteLine(" ---- Crawling stopped!! Aborting!");
-                return;
+                return new List<LinkToCrawl>();
             }
 
             if (url.StartsWith("/"))
@@ -99,22 +142,25 @@ namespace Crawler.AppCore
             {
                 try
                 {
-                    var response = client.GetAsync(url, token).Result;
+                    var response = client.GetAsync(url, _cancellationTokenSource.Token).Result;
                     var links = ExtractLinks(url, response).Result.Distinct().ToList();
 
                     crawlResult.Links = links;
                     crawlResult.StatusCode = response.StatusCode;
                     AddCrawlResult(crawlResult);
 
-                    if (!token.IsCancellationRequested)
-                    {
-                        Parallel.ForEach(links, _parallelOptions, (link) => CrawlLink(link, url, token));
-                    }
+                    return links.Select(link => new LinkToCrawl { Url = link, Referrer = referrerUrl }).ToList();
                 }
-                // todo : handle TaskCancellationException
-                catch (OperationCanceledException e)
+                catch (AggregateException aggregateException)
                 {
-                    Console.WriteLine("Cancelled : " + e.Message);
+                    aggregateException.Handle(ex =>
+                    {
+                        if (ex is TaskCanceledException)
+                            Console.WriteLine("Cancelled : " + ex.Message);
+                        return ex is TaskCanceledException;
+                    });
+
+                    return new List<LinkToCrawl>();
                 }
                 catch (Exception ex)
                 {
