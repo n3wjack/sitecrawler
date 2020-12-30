@@ -4,9 +4,9 @@ using Xunit;
 namespace Crawler.Tests
 {
     /// <summary>
-    /// Test to test HttpContentBuilder test code for tests. Lot's of testing isn't it?
+    /// Test to test HttpResponseMessageBuilder testcode for tests. Lot's of testing isn't it?
     /// </summary>
-    public class HttpContentBuilderTests
+    public class HttpResponseMessageBuilderTests
     {
         [Fact]
         public async void WhenAddLinkIsUsed_TheLinkIsInTheResult()

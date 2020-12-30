@@ -18,7 +18,7 @@ namespace Crawler.Tests
         {
             var uri = new Uri("https://foobar.com/");
             return new WebCrawler(
-                new WebCrawlConfiguration { Uri = uri },
+                new WebCrawlConfiguration { Uri = uri, RetryDelay = 1 },
                 TestHttpClientFactory);
         }
 
@@ -133,7 +133,7 @@ namespace Crawler.Tests
     public class WhenCrawlingSiteWithLotsOfLinks : GivenAWebCrawler
     {
         private WebCrawler _sut;
-        private const int _links = 20;
+        private const int _links = 42;
 
         public WhenCrawlingSiteWithLotsOfLinks()
         {

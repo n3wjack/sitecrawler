@@ -1,10 +1,7 @@
-﻿using HtmlAgilityPack;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +12,7 @@ namespace Crawler.AppCore
         private ConcurrentDictionary<string, LinkCrawlResult> _linkCrawlResults = new ConcurrentDictionary<string, LinkCrawlResult>();
         private ConcurrentQueue<LinkToCrawl> _linksToCrawl = new ConcurrentQueue<LinkToCrawl>();
         private Task[] _crawlTasks;
+        private LinkExtractor _linkExtractor = new LinkExtractor();
         private readonly WebCrawlConfiguration _configuration;
         private readonly Func<IHttpClient> _httpClientFactory;
         private ParallelOptions _parallelOptions;
@@ -44,10 +42,9 @@ namespace Crawler.AppCore
             var startUri = _configuration.Uri.ToString();
 
             _isFirstLink = true;
-            _linksToCrawl.Enqueue(new LinkToCrawl { Url = startUri, Referrer = string.Empty });
+            _linksToCrawl.Enqueue(new LinkToCrawl { Url = startUri, Referrer = startUri });
 
-            _crawlTasks = Enumerable.Range(1, 10).Select(i => new Task(CrawlTaskAction, _cancellationTokenSource.Token)).ToArray();
-            _crawlTasks.ToList().ForEach(t => t.Start());
+            _crawlTasks = Enumerable.Range(1, 10).Select((n) => CrawlTaskAction(n)).ToArray();
 
             try
             {
@@ -63,17 +60,20 @@ namespace Crawler.AppCore
             return _linkCrawlResults.Values.ToList();
         }
 
-        private void CrawlTaskAction()
+        private async Task CrawlTaskAction(int number)
         {
             LinkToCrawl linkToCrawl;
             int failedDequeues = 0;
 
+            Console.WriteLine($"=== TASK {number} started");
             do
             {
                 if (_linksToCrawl.TryDequeue(out linkToCrawl))
                 {
                     failedDequeues = 0;
-                    var linksToCrawl = CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
+                    Console.WriteLine($"=== Start crawling link {linkToCrawl.Url}");
+                    var linksToCrawl = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
+                    Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {linksToCrawl.Count} links");
                     linksToCrawl.ForEach(l => _linksToCrawl.Enqueue(l));
                     _isFirstLink = false;
                 }
@@ -82,14 +82,15 @@ namespace Crawler.AppCore
                     if (!_isFirstLink)
                     {
                         failedDequeues++;
+                        Console.WriteLine($"=== Task {number} waiting...");
                     }
+
                     // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
-                    Console.WriteLine("=== Task waiting...");
-                    Thread.Sleep(1000);
+                    Thread.Sleep(_configuration.RetryDelay);
                 }
             } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);
 
-            Console.WriteLine("=== TASK STOPPED ===");
+            Console.WriteLine($"=== TASK {number} STOPPED ===");
         }
 
         public void Stop()
@@ -122,7 +123,7 @@ namespace Crawler.AppCore
         /// <param name="url">The URL of the link to crawl.</param>
         /// <param name="referrerUrl">The referrer of the link.</param>
         /// <returns>A list of links found.</returns>
-        private List<LinkToCrawl> CrawlLink(string url, string referrerUrl)
+        private async Task<List<LinkToCrawl>> CrawlLink(string url, string referrerUrl)
         {
             var crawlResult = new LinkCrawlResult { Url = url, ReferrerUrl = referrerUrl };
 
@@ -142,8 +143,10 @@ namespace Crawler.AppCore
             {
                 try
                 {
-                    var response = client.GetAsync(url, _cancellationTokenSource.Token).Result;
-                    var links = ExtractLinks(url, response).Result.Distinct().ToList();
+                    var response = await client.GetAsync(url, _cancellationTokenSource.Token);
+                    var links = (await _linkExtractor.ExtractLinks(url, response))
+                        .Where(l => !LinkAlreadyCrawled(l))
+                        .ToList();
 
                     crawlResult.Links = links;
                     crawlResult.StatusCode = response.StatusCode;
@@ -168,49 +171,6 @@ namespace Crawler.AppCore
                     throw;
                 }
             }
-        }
-
-        private async Task<List<string>> ExtractLinks(string url, HttpResponseMessage response)
-        {
-            var resultLinks = new List<string>();
-
-            if (IsRedirect(response.StatusCode))
-            {
-                var redirectUri = response.Headers.Location?.IsAbsoluteUri ?? false ? response.Headers.Location?.AbsoluteUri : null;
-                if (redirectUri != null)
-                {
-                    resultLinks.Add(redirectUri);
-                }
-            }
-            else
-            {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(await response.Content.ReadAsStringAsync());
-                var links = doc.DocumentNode.SelectNodes("//a");
-
-                if (links != null)
-                {
-                    foreach (var link in links)
-                    {
-                        var linkValidator = new LinkValidator(new Uri(url));
-                        if (linkValidator.TryValidateInternalLink(link.GetAttributeValue("href", null), out var href) 
-                            && !LinkAlreadyCrawled(href))
-                        {
-                            resultLinks.Add(href);
-                        }
-                    }
-                }
-            }
-
-            return resultLinks;
-        }
-
-        private bool IsRedirect(HttpStatusCode statusCode)
-        {
-            return
-                statusCode == HttpStatusCode.PermanentRedirect ||
-                statusCode == HttpStatusCode.Redirect ||
-                statusCode == HttpStatusCode.Moved;
         }
     }
 }
