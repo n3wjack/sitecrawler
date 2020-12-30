@@ -39,7 +39,12 @@ namespace Crawler
             Console.WriteLine("Press ENTER to start crawling.");
             Console.ReadLine();
 
-            var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration { Uri = new Uri(appSettings.Url) });
+            var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration 
+            { 
+                Uri = new Uri(appSettings.Url),
+                RequestWaitDelay = appSettings.RequestDelay,
+                ParallelTasks = appSettings.ParallelTasks
+            });
             crawler.LinkCrawled += Crawler_LinkCrawled;
 
             Console.CancelKeyPress += (sender, e) =>

@@ -44,7 +44,7 @@ namespace Crawler.AppCore
             _isFirstLink = true;
             _linksToCrawl.Enqueue(new LinkToCrawl { Url = startUri, Referrer = startUri });
 
-            _crawlTasks = Enumerable.Range(1, 10).Select((n) => CrawlTaskAction(n)).ToArray();
+            _crawlTasks = Enumerable.Range(1, _configuration.ParallelTasks).Select((n) => CrawlTaskAction(n)).ToArray();
 
             try
             {
@@ -71,11 +71,20 @@ namespace Crawler.AppCore
                 if (_linksToCrawl.TryDequeue(out linkToCrawl))
                 {
                     failedDequeues = 0;
-                    Console.WriteLine($"=== Start crawling link {linkToCrawl.Url}");
-                    var linksToCrawl = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
-                    Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {linksToCrawl.Count} links");
-                    linksToCrawl.ForEach(l => _linksToCrawl.Enqueue(l));
-                    _isFirstLink = false;
+                    if (!LinkAlreadyCrawled(linkToCrawl.Url))
+                    {
+                        Console.WriteLine($"=== Start crawling link {linkToCrawl.Url}");
+                        var linksToCrawl = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
+                        Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {linksToCrawl.Count} links");
+                        linksToCrawl.ForEach(l => _linksToCrawl.Enqueue(l));
+                        _isFirstLink = false;
+
+                        await Task.Delay(_configuration.RequestWaitDelay);
+                    }
+                    else 
+                    {
+                        Console.WriteLine($"=== Already crawling link {linkToCrawl.Url}, skipping...");
+                    }
                 }
                 else
                 {
@@ -86,7 +95,7 @@ namespace Crawler.AppCore
                     }
 
                     // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
-                    Thread.Sleep(_configuration.RetryDelay);
+                    await Task.Delay(_configuration.RetryDelay);
                 }
             } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);
 
@@ -167,7 +176,7 @@ namespace Crawler.AppCore
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");
+                    Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");                    
                     throw;
                 }
             }

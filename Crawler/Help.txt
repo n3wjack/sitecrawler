@@ -15,8 +15,14 @@ _\( )/_            /(_)\      .--'/()\'--.    | /  \ |   /(O)\
 
 Usage: dotnet crawler.dll [options]
 
+Example: dotnet crawler.dll --url https://awesomesite.com/
+
 Options:
-	--url         The URL to crawl.
-	--outputfile  The CSV output file to create with the crawler results (optional).
-	--minutes     Time in minutes to crawl the given site (optional).
+    --url           The URL to crawl.
+    --outputfile    The CSV output file to create with the crawler results (optional).
+    --minutes       Time in minutes to crawl the given site (optional).
+    --paralleltasks Number of tasks to use to crawl links in parallel (optional). Default is 10.
+    --requestdelay  Number of milliseconds to wait after a request, to throttle request (optional). Default is 0.
  
+(ascii art by jgs)
+
