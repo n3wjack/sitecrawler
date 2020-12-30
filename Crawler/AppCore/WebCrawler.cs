@@ -152,7 +152,7 @@ namespace Crawler.AppCore
                     crawlResult.StatusCode = response.StatusCode;
                     AddCrawlResult(crawlResult);
 
-                    return links.Select(link => new LinkToCrawl { Url = link, Referrer = referrerUrl }).ToList();
+                    return links.Select(link => new LinkToCrawl { Url = link, Referrer = url }).ToList();
                 }
                 catch (AggregateException aggregateException)
                 {
