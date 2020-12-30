@@ -55,6 +55,10 @@ namespace Crawler.AppCore
                     hrefout = href;
                     return true;
                 }
+                else 
+                {
+                    return false;
+                }
             }
 
             if (Uri.TryCreate(href, UriKind.Relative, out var uri))

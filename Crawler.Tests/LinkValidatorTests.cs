@@ -4,11 +4,11 @@ using Xunit;
 
 namespace Crawler.Tests
 {
-    public class LinkValidatorTest
+    public class GivenALinkValidator
     {
         protected string RootUrl { get; set; }
 
-        public LinkValidatorTest(string rootUrl)
+        public GivenALinkValidator(string rootUrl)
         {
             RootUrl = rootUrl;
         }
@@ -39,7 +39,7 @@ namespace Crawler.Tests
         }
     }
 
-    public class Given_a_root_url : LinkValidatorTest
+    public class Given_a_root_url : GivenALinkValidator
     {
         public Given_a_root_url()
             : base("https://foobar.net")
@@ -59,6 +59,10 @@ namespace Crawler.Tests
         [Theory]
         [InlineData("https://google.com")]
         [InlineData("ftp://foobar.net/bar")]
+        [InlineData("https://m.foobar.net/")]
+        [InlineData("http://m.foobar.net")]
+        [InlineData("//m.foobar.net/")]
+        [InlineData("//google.com/bar")]
         public void CheckExternalUrl(string url)
         {
             Assert.False(ValidateUrl(url));
@@ -83,7 +87,7 @@ namespace Crawler.Tests
         }
     }
 
-    public class Given_a_subfolder_url_with_trailing_slash : LinkValidatorTest
+    public class Given_a_subfolder_url_with_trailing_slash : GivenALinkValidator
     {
         public Given_a_subfolder_url_with_trailing_slash()
             : base("https://foo.com/bar/")
@@ -99,7 +103,7 @@ namespace Crawler.Tests
         }
     }
 
-    public class Given_a_subfolder_url_without_trailing_slash : LinkValidatorTest
+    public class Given_a_subfolder_url_without_trailing_slash : GivenALinkValidator
     {
         public Given_a_subfolder_url_without_trailing_slash()
             : base("https://foo.com/foo/bar")
