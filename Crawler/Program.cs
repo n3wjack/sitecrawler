@@ -127,6 +127,7 @@ namespace Crawler
             }
 
             results.ToList().ForEach(r => File.AppendAllText(filename, $"\"{r.Url}\",{r.StatusCode},\"{r.ReferrerUrl}\"\n"));
+            Console.WriteLine("Done!");
         }
     }
 }

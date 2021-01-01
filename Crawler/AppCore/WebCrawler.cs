@@ -174,9 +174,14 @@ namespace Crawler.AppCore
 
                     return new List<LinkToCrawl>();
                 }
+                catch (TaskCanceledException tce)
+                {
+                    Console.WriteLine("Cancelled : " + tce.Message);
+                    return new List<LinkToCrawl>();
+                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");                    
+                    Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");
                     throw;
                 }
             }
