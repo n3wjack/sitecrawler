@@ -54,7 +54,7 @@ namespace Crawler.Tests
         }
 
         [Fact]
-        public void ThenThereAreTwoResults()
+        public void ThenThereAreThreeResults()
         {
             Assert.Equal(3, Result.Count);
         }
@@ -63,6 +63,73 @@ namespace Crawler.Tests
         public void ThenTheReferrerIsSetForTheTestLink()
         {
             Assert.Contains(Result, r => r.Url == "https://foobar.com/test" && r.ReferrerUrl == "https://foobar.com/");
+        }
+    }
+
+    public class WhenCrawlingSiteWithAnError : GivenAWebCrawler
+    {
+        public WhenCrawlingSiteWithAnError()
+        {
+            var sut = CreateSut();
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+                .Throws(new Exception("Oops"));
+
+            Result = sut.Start();
+        }
+
+        [Fact]
+        public void ThenTheTestLinkWasCrawled()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/test");
+        }
+
+        [Fact]
+        public void ThenThereAreTwoResults()
+        {
+            Assert.Equal(2, Result.Count);
+        }
+
+        [Fact]
+        public void ThenTheErrorMessageIsSetForTheFailedLink()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/test" && r.ExceptionMessage == "Oops");
+        }
+    }
+
+    public class WhenCrawlingSiteWithATaskCanceledException : GivenAWebCrawler
+    {
+        public WhenCrawlingSiteWithATaskCanceledException()
+        {
+            var sut = CreateSut();
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+                .Throws(new TaskCanceledException("Oops"));
+
+            Result = sut.Start();
+        }
+
+        [Fact]
+        public void ThenTheTestLinkWasCrawled()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/");
+        }
+
+        /// <summary>
+        /// When the crawl is halted and tasks are cancelled, the results aren't stored.
+        /// </summary>
+        [Fact]
+        public void ThenThereIsOneResult()
+        {
+            Assert.Equal(1, Result.Count);
         }
     }
 
@@ -169,6 +236,35 @@ namespace Crawler.Tests
             var result = _sut.Start();
 
             Assert.Equal((_links * 2) + 1, result.Count);
+        }
+    }
+
+    public class WhenCrawlingSiteWithDuplicateLinks : GivenAWebCrawler
+    {
+        public WhenCrawlingSiteWithDuplicateLinks()
+        {
+            var sut = CreateSut();
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/test", "test link").AddLink("/test", "same link").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.Build()));
+
+            Result = sut.Start();
+        }
+
+        [Fact]
+        public void ThenTheTestLinkWasCrawled()
+        {
+            Assert.Contains(Result, r => r.Url == "https://foobar.com/test");
+        }
+
+        [Fact]
+        public void ThenThereAreTwoResults()
+        {
+            Assert.Equal(2, Result.Count);
         }
     }
 }

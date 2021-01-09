@@ -60,12 +60,12 @@ namespace Crawler.AppCore
             return _linkCrawlResults.Values.ToList();
         }
 
-        private async Task CrawlTaskAction(int number)
+        private async Task CrawlTaskAction(int taskNumber)
         {
             LinkToCrawl linkToCrawl;
             int failedDequeues = 0;
 
-            Console.WriteLine($"=== TASK {number} started");
+            Console.WriteLine($"=== TASK {taskNumber} started");
             do
             {
                 if (_linksToCrawl.TryDequeue(out linkToCrawl))
@@ -74,14 +74,27 @@ namespace Crawler.AppCore
                     if (!LinkAlreadyCrawled(linkToCrawl.Url))
                     {
                         Console.WriteLine($"=== Start crawling link {linkToCrawl.Url}");
-                        var linksToCrawl = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
-                        Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {linksToCrawl.Count} links");
-                        linksToCrawl.ForEach(l => _linksToCrawl.Enqueue(l));
+                        var crawlResult = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
+
+                        if (crawlResult != null)
+                        {
+                            AddCrawlResult(crawlResult);
+                            Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {crawlResult.Links.Count} links");
+                            crawlResult.Links
+                                .Select(l => new LinkToCrawl { Referrer = crawlResult.Url, Url = l })
+                                .ToList()
+                                .ForEach(l => _linksToCrawl.Enqueue(l));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"=== Failed to crawl link {linkToCrawl.Url}.");
+                        }
+
                         _isFirstLink = false;
 
                         await Task.Delay(_configuration.RequestWaitDelay);
                     }
-                    else 
+                    else
                     {
                         Console.WriteLine($"=== Already crawling link {linkToCrawl.Url}, skipping...");
                     }
@@ -91,7 +104,7 @@ namespace Crawler.AppCore
                     if (!_isFirstLink)
                     {
                         failedDequeues++;
-                        Console.WriteLine($"=== Task {number} waiting...");
+                        Console.WriteLine($"=== Task {taskNumber} waiting...");
                     }
 
                     // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
@@ -99,7 +112,7 @@ namespace Crawler.AppCore
                 }
             } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);
 
-            Console.WriteLine($"=== TASK {number} STOPPED ===");
+            Console.WriteLine($"=== TASK {taskNumber} STOPPED ===");
         }
 
         public void Stop()
@@ -127,12 +140,12 @@ namespace Crawler.AppCore
         }
 
         /// <summary>
-        /// Crawls a given link and returns a list of new found links to crawl.
+        /// Crawls a given link and returns the crawl result.
         /// </summary>
         /// <param name="url">The URL of the link to crawl.</param>
         /// <param name="referrerUrl">The referrer of the link.</param>
-        /// <returns>A list of links found.</returns>
-        private async Task<List<LinkToCrawl>> CrawlLink(string url, string referrerUrl)
+        /// <returns>The crawl results, or null if the URL could not be crawled or was already crawled.</returns>
+        private async Task<LinkCrawlResult> CrawlLink(string url, string referrerUrl)
         {
             var crawlResult = new LinkCrawlResult { Url = url, ReferrerUrl = referrerUrl };
 
@@ -140,7 +153,7 @@ namespace Crawler.AppCore
             if (!_linkCrawlResults.TryAdd(url, crawlResult))
             {
                 Console.WriteLine("=== Already crawled " + url);
-                return new List<LinkToCrawl>();
+                return null;
             }
 
             if (url.StartsWith("/"))
@@ -159,9 +172,8 @@ namespace Crawler.AppCore
 
                     crawlResult.Links = links;
                     crawlResult.StatusCode = response.StatusCode;
-                    AddCrawlResult(crawlResult);
 
-                    return links.Select(link => new LinkToCrawl { Url = link, Referrer = url }).ToList();
+                    return crawlResult;
                 }
                 catch (AggregateException aggregateException)
                 {
@@ -172,17 +184,23 @@ namespace Crawler.AppCore
                         return ex is TaskCanceledException;
                     });
 
-                    return new List<LinkToCrawl>();
+                    _linkCrawlResults.TryRemove(url, out crawlResult);
+                    return null;
                 }
                 catch (TaskCanceledException tce)
                 {
                     Console.WriteLine("Cancelled : " + tce.Message);
-                    return new List<LinkToCrawl>();
+
+                    _linkCrawlResults.TryRemove(url, out crawlResult);
+                    return null;
                 }
                 catch (Exception ex)
                 {
+                    crawlResult.RequestFailed = true;
+                    crawlResult.ExceptionMessage = ex.Message;
                     Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");
-                    throw;
+
+                    return crawlResult;
                 }
             }
         }
