@@ -267,4 +267,33 @@ namespace Crawler.Tests
             Assert.Equal(2, Result.Count);
         }
     }
+
+    public class WhenCrawlingSiteWithNonHtmlContent : GivenAWebCrawler
+    {
+        public WhenCrawlingSiteWithNonHtmlContent()
+        {
+            var sut = CreateSut();
+            var builder = new HttpResponseMessageBuilder();
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.AddLink("/test", "test link").AddLink("/test", "same link").Build()));
+
+            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(builder.WithContentType("application/json").AddLink("/shouldnotbecrawled", "nope").Build()));
+
+            Result = sut.Start();
+        }
+
+        [Fact]
+        public void ThenTheLinkWasNotCrawled()
+        {
+            Assert.DoesNotContain(Result, r => r.Url == "https://foobar.com/shouldnotbecrawled");
+        }
+
+        [Fact]
+        public void ThenThereIsOneResult()
+        {
+            Assert.Equal(2, Result.Count);
+        }
+    }
 }

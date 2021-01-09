@@ -1,0 +1,14 @@
+﻿@page
+@model NonHtmlPageModel
+@{
+}
+This page should not be parsed for additional links.
+So we'll generate a bunch of them, just to make sure.
+
+@for (var ix = 0; ix < 100; ix++)
+{
+    <div><a href="linkthatshouldnotbeparsed-@ix">this should not be parsed</a></div>
+
+    // Slow the page down to make it noticable it's being crawled.
+    await Task.Delay(50);
+}

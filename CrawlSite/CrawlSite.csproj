@@ -13,6 +13,9 @@
     <Content Update="Pages\subfolder\bar.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
+    <Content Update="Pages\NonHtmlPage.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
     <Content Update="Pages\SubPage3.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>

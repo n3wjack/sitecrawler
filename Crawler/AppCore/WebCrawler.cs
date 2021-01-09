@@ -166,11 +166,16 @@ namespace Crawler.AppCore
                 try
                 {
                     var response = await client.GetAsync(url, _cancellationTokenSource.Token);
-                    var links = (await _linkExtractor.ExtractLinks(url, response))
-                        .Where(l => !LinkAlreadyCrawled(l))
-                        .ToList();
 
-                    crawlResult.Links = links;
+                    if (IsHtmlContent(response))
+                    {
+                        var links = (await _linkExtractor.ExtractLinks(url, response))
+                            .Where(l => !LinkAlreadyCrawled(l))
+                            .ToList();
+
+                        crawlResult.Links = links;
+                    }
+
                     crawlResult.StatusCode = response.StatusCode;
 
                     return crawlResult;
@@ -203,6 +208,11 @@ namespace Crawler.AppCore
                     return crawlResult;
                 }
             }
+        }
+
+        private bool IsHtmlContent(System.Net.Http.HttpResponseMessage response)
+        {
+            return response.Content.Headers.ContentType?.MediaType.ToLower() == "text/html";
         }
     }
 }

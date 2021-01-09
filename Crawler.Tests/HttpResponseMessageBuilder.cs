@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Linq;
+using System.Net.Http.Headers;
 
 namespace Crawler.Tests
 {
@@ -17,6 +18,7 @@ namespace Crawler.Tests
         private StringBuilder _sb = new StringBuilder();
         private Dictionary<string, string> _headers = new Dictionary<string, string>();
         private HttpStatusCode _statusCode;
+        private string _contentType = "text/html";
         private bool _writeBody;
 
         public HttpResponseMessageBuilder()
@@ -53,9 +55,12 @@ namespace Crawler.Tests
                 _sb.Clear();
             }
 
+            var content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(_sb.ToString())));
+            content.Headers.ContentType = new MediaTypeHeaderValue(_contentType);
+
             var httpResponse = new HttpResponseMessage(_statusCode)
             {
-                Content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(_sb.ToString())))
+                Content = content,
             };
 
             _headers.ToList().ForEach(kv => httpResponse.Headers.Add(kv.Key, kv.Value));
@@ -88,6 +93,12 @@ namespace Crawler.Tests
         public HttpResponseMessageBuilder WithHeader(string name, string value)
         {
             _headers.Add(name, value);
+            
+            return this;
+        }
+        public HttpResponseMessageBuilder WithContentType(string contentType)
+        {
+            _contentType = contentType;
 
             return this;
         }
