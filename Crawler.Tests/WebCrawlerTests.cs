@@ -8,9 +8,8 @@ using Xunit;
 
 namespace Crawler.Tests
 {
-    public abstract class GivenAWebCrawler
+    public abstract class GivenAWebCrawler : WebCrawlerTest
     {
-        protected Mock<IHttpClient> HttpClientMock { get; set; } = new Mock<IHttpClient>();
         protected WebCrawler Sut { get; set; }
         protected IList<LinkCrawlResult> Result { get; set; }
 
@@ -34,15 +33,10 @@ namespace Crawler.Tests
         {
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test2", "").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test2", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.Build()));
+            
+            SetupRequest("https://foobar.com/", builder.AddLink("/test", "test link").Build());
+            SetupRequest("https://foobar.com/test", builder.AddLink("/test2", "").Build());
+            SetupRequest("https://foobar.com/test2", builder.Build());
 
             Result = sut.Start();
         }
@@ -73,10 +67,8 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+            SetupRequest("https://foobar.com/", builder.AddLink("/test", "test link").Build());
+            HttpClientMock.Setup(c => c.GetHeadersAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
                 .Throws(new Exception("Oops"));
 
             Result = sut.Start();
@@ -108,10 +100,9 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test", "test link").Build()));
+            SetupRequest("https://foobar.com/", builder.AddLink("/test", "test link").Build());
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
+            HttpClientMock.Setup(c => c.GetHeadersAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
                 .Throws(new TaskCanceledException("Oops"));
 
             Result = sut.Start();
@@ -140,14 +131,9 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/redirect", "redirected link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.MovedTo("https://foobar.com/redirect-target").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect-target", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.Build()));
+            SetupRequest("https://foobar.com/", builder.AddLink("/redirect", "redirected link").Build());
+            SetupRequest("https://foobar.com/redirect", builder.MovedTo("https://foobar.com/redirect-target").Build());
+            SetupRequest("https://foobar.com/redirect-target", builder.Build());
 
             Result = sut.Start();
         }
@@ -172,14 +158,9 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/redirect", "redirected link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.RedirectTo("https://foobar.com/redirect-target").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/redirect-target", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.Build()));
+            SetupRequest("https://foobar.com/", builder.AddLink("/redirect", "redirected link").Build());
+            SetupRequest("https://foobar.com/redirect", builder.RedirectTo("https://foobar.com/redirect-target").Build());
+            SetupRequest("https://foobar.com/redirect-target", builder.Build());
 
             Result = sut.Start();
         }
@@ -208,24 +189,19 @@ namespace Crawler.Tests
 
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLinks("/link-{0}", _links).Build()));
+            SetupRequest("https://foobar.com/", builder.AddLinks("/link-{0}", _links).Build());
 
             // Return some empty documents when one of those links is called.
             for (var i = 0; i < _links; i++)
             {
                 var url = $"https://foobar.com/link-{i}";
-
-                HttpClientMock.Setup(c => c.GetAsync(url, It.IsAny<CancellationToken>()))
-                    .Returns(Task.FromResult(builder.AddLinks("sublink-{0}", _links).Build()));
+                SetupRequest(url, builder.AddLinks("sublink-{0}", _links).Build());
 
                 // Return an empty page for the sublinks
                 for (var j = 0; j < _links; j++)
                 {
                     var sublinkurl = $"https://foobar.com/sublink-{j}";
-
-                    HttpClientMock.Setup(c => c.GetAsync(sublinkurl, It.IsAny<CancellationToken>()))
-                        .Returns(Task.FromResult(builder.Build()));
+                    SetupRequest(sublinkurl, builder.Build());
                 }
             }
         }
@@ -246,11 +222,8 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test", "test link").AddLink("/test", "same link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.Build()));
+            SetupRequest("https://foobar.com/", builder.AddLink("/test", "test link").AddLink("/test", "same link").Build());
+            SetupRequest("https://foobar.com/test", builder.Build());
 
             Result = sut.Start();
         }
@@ -275,11 +248,8 @@ namespace Crawler.Tests
             var sut = CreateSut();
             var builder = new HttpResponseMessageBuilder();
 
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.AddLink("/test", "test link").AddLink("/test", "same link").Build()));
-
-            HttpClientMock.Setup(c => c.GetAsync("https://foobar.com/test", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(builder.WithContentType("application/json").AddLink("/shouldnotbecrawled", "nope").Build()));
+            SetupRequest("https://foobar.com/", builder.AddLink("/test", "test link").AddLink("/test", "same link").Build());
+            SetupRequest("https://foobar.com/test", builder.WithContentType("application/json").AddLink("/shouldnotbecrawled", "nope").Build());
 
             Result = sut.Start();
         }

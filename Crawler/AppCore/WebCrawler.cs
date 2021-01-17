@@ -165,10 +165,13 @@ namespace Crawler.AppCore
             {
                 try
                 {
-                    var response = await client.GetAsync(url, _cancellationTokenSource.Token);
+                    var response = await client.GetHeadersAsync(url, _cancellationTokenSource.Token);
 
                     if (IsHtmlContent(response))
                     {
+                        // Get full content for link parsing.
+                        response = await client.GetAsync(url, _cancellationTokenSource.Token);
+
                         var links = (await _linkExtractor.ExtractLinks(url, response))
                             .Where(l => !LinkAlreadyCrawled(l))
                             .ToList();

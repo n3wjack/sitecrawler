@@ -9,5 +9,5 @@ External links are ignored.
 To get a basic version:
 
 - Add a way to log info/debug level stuff instead of using console.writeline.
-- Return/indicate protocol/network errors, ssl errors etc. in the crawl result when no http response was received. Log the exception message.
 - Avoid downloading images or other binary files.
+  -> Check for extensions? Using HEAD alone doesn't seem to cut it on some servers.

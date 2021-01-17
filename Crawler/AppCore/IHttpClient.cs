@@ -8,5 +8,6 @@ namespace Crawler.AppCore
     public interface IHttpClient : IDisposable
     {
         Task<HttpResponseMessage> GetAsync(string url, CancellationToken token);
+        Task<HttpResponseMessage> GetHeadersAsync(string url, CancellationToken token);
     }
 }
