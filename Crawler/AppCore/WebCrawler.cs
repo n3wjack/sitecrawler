@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace Crawler.AppCore
         private LinkExtractor _linkExtractor = new LinkExtractor();
         private readonly WebCrawlConfiguration _configuration;
         private readonly Func<IHttpClient> _httpClientFactory;
+        private readonly ILogger _logger;
         private ParallelOptions _parallelOptions;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isFirstLink;
@@ -29,10 +31,11 @@ namespace Crawler.AppCore
             }
         }
 
-        public WebCrawler(WebCrawlConfiguration configuration, Func<IHttpClient> httpClientFactory)
+        public WebCrawler(WebCrawlConfiguration configuration, Func<IHttpClient> httpClientFactory, ILogger logger)
         {
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public IList<LinkCrawlResult> Start()
@@ -40,6 +43,8 @@ namespace Crawler.AppCore
             SetOptions();
 
             var startUri = _configuration.Uri.ToString();
+
+            _logger.LogInformation("**** Start crawling {url} ****", startUri.ToString());
 
             _isFirstLink = true;
             _linksToCrawl.Enqueue(new LinkToCrawl { Url = startUri, Referrer = startUri });
@@ -49,12 +54,12 @@ namespace Crawler.AppCore
             try
             {
                 Task.WaitAll(_crawlTasks);
-                Console.WriteLine("**** Finished crawling ****");
+                _logger.LogInformation("**** Finished crawling ****");
             }
             catch (AggregateException ex)
             {
-                Console.WriteLine("\n***** Exceptions ****\n");
-                ex.InnerExceptions.ToList().ForEach(e => Console.WriteLine(ex.Message));
+                _logger.LogError("Crawling error:", ex);
+                //ex.InnerExceptions.ToList().ForEach(e => _logger.LogError("Crawling error:", ex));
             }
 
             return _linkCrawlResults.Values.ToList();
@@ -65,7 +70,7 @@ namespace Crawler.AppCore
             LinkToCrawl linkToCrawl;
             int failedDequeues = 0;
 
-            Console.WriteLine($"=== TASK {taskNumber} started");
+            _logger.LogDebug($"=== TASK {taskNumber} started");
             do
             {
                 if (_linksToCrawl.TryDequeue(out linkToCrawl))
@@ -73,13 +78,13 @@ namespace Crawler.AppCore
                     failedDequeues = 0;
                     if (!LinkAlreadyCrawled(linkToCrawl.Url))
                     {
-                        Console.WriteLine($"=== Start crawling link {linkToCrawl.Url}");
+                        _logger.LogDebug($"=== Start crawling link {linkToCrawl.Url}");
                         var crawlResult = await CrawlLink(linkToCrawl.Url, linkToCrawl.Referrer);
 
                         if (crawlResult != null)
                         {
                             AddCrawlResult(crawlResult);
-                            Console.WriteLine($"=== Ended crawling link {linkToCrawl.Url}, found {crawlResult.Links.Count} links");
+                            _logger.LogDebug($"=== Ended crawling link {linkToCrawl.Url}, found {crawlResult.Links.Count} links");
                             crawlResult.Links
                                 .Select(l => new LinkToCrawl { Referrer = crawlResult.Url, Url = l })
                                 .ToList()
@@ -87,7 +92,7 @@ namespace Crawler.AppCore
                         }
                         else
                         {
-                            Console.WriteLine($"=== Failed to crawl link {linkToCrawl.Url}.");
+                            _logger.LogDebug($"=== Failed to crawl link {linkToCrawl.Url}.");
                         }
 
                         _isFirstLink = false;
@@ -96,7 +101,7 @@ namespace Crawler.AppCore
                     }
                     else
                     {
-                        Console.WriteLine($"=== Already crawling link {linkToCrawl.Url}, skipping...");
+                        _logger.LogDebug($"=== Already crawling link {linkToCrawl.Url}, skipping...");
                     }
                 }
                 else
@@ -104,7 +109,7 @@ namespace Crawler.AppCore
                     if (!_isFirstLink)
                     {
                         failedDequeues++;
-                        Console.WriteLine($"=== Task {taskNumber} waiting...");
+                        _logger.LogDebug($"=== Task {taskNumber} waiting...");
                     }
 
                     // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
@@ -112,7 +117,7 @@ namespace Crawler.AppCore
                 }
             } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);
 
-            Console.WriteLine($"=== TASK {taskNumber} STOPPED ===");
+            _logger.LogDebug($"=== TASK {taskNumber} STOPPED ===");
         }
 
         public void Stop()
@@ -152,7 +157,7 @@ namespace Crawler.AppCore
             // Add an empty crawlresult to avoid other threads from also crawling the same url.
             if (!_linkCrawlResults.TryAdd(url, crawlResult))
             {
-                Console.WriteLine("=== Already crawled " + url);
+                _logger.LogDebug("=== Already crawled " + url);
                 return null;
             }
 
@@ -188,7 +193,7 @@ namespace Crawler.AppCore
                     aggregateException.Handle(ex =>
                     {
                         if (ex is TaskCanceledException)
-                            Console.WriteLine("Cancelled : " + ex.Message);
+                            _logger.LogDebug("Cancelled : " + ex.Message);
                         return ex is TaskCanceledException;
                     });
 
@@ -197,7 +202,7 @@ namespace Crawler.AppCore
                 }
                 catch (TaskCanceledException tce)
                 {
-                    Console.WriteLine("Cancelled : " + tce.Message);
+                    _logger.LogDebug("Cancelled : " + tce.Message);
 
                     _linkCrawlResults.TryRemove(url, out crawlResult);
                     return null;
@@ -206,7 +211,7 @@ namespace Crawler.AppCore
                 {
                     crawlResult.RequestFailed = true;
                     crawlResult.ExceptionMessage = ex.Message;
-                    Console.WriteLine($"-- CRAWL ERROR on {url} : {ex.Message}");
+                    _logger.LogError($"-- CRAWL ERROR on {url} : ", ex);
 
                     return crawlResult;
                 }

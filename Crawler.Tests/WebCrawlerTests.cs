@@ -18,7 +18,8 @@ namespace Crawler.Tests
             var uri = new Uri("https://foobar.com/");
             return new WebCrawler(
                 new WebCrawlConfiguration { Uri = uri, RetryDelay = 1 },
-                TestHttpClientFactory);
+                TestHttpClientFactory,
+                LoggerMock.Object);
         }
 
         private IHttpClient TestHttpClientFactory()

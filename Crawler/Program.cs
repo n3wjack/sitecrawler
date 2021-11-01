@@ -1,8 +1,8 @@
 ﻿using Crawler.AppCore;
 using Crawler.Configuration;
-using Crawler.Helpers;
 using Crawler.Infrastructure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,11 +17,14 @@ namespace Crawler
     {
         private static int _linksCrawled;
         private static DateTime _startTime;
+        private static ILogger _logger;
 
         static void Main(string[] args)
         {
             var appSettings = new AppSettings(args);
             new ConfigurationBuilder().AddCommandLine(args).Build().Bind(appSettings);
+            
+            _logger = CreateLogger(appSettings.DebugLogging);
 
             if (!appSettings.IsValid || appSettings.ShowHelp)
             {
@@ -34,17 +37,12 @@ namespace Crawler
                 return;
             }
 
-            Console.WriteLine($"Ready to crawl {appSettings.Url}");
-
-            Console.WriteLine("Press ENTER to start crawling.");
-            Console.ReadLine();
-
             var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration 
             { 
                 Uri = new Uri(appSettings.Url),
                 RequestWaitDelay = appSettings.RequestDelay,
-                ParallelTasks = appSettings.ParallelTasks
-            });
+                ParallelTasks = appSettings.ParallelTasks,
+            }, _logger);
             crawler.LinkCrawled += Crawler_LinkCrawled;
 
             Console.CancelKeyPress += (sender, e) =>
@@ -55,18 +53,33 @@ namespace Crawler
 
             if (appSettings.Minutes != 0)
             {
-                Console.WriteLine($"Stopping crawling after {appSettings.Minutes} minutes.");
+                _logger.LogInformation($"Stopping crawling after {appSettings.Minutes} minutes.");
                 var timer = new Timer(TimerCallback, crawler, appSettings.Minutes * 60 * 1000, Timeout.Infinite);
             }
 
             _startTime = DateTime.UtcNow;
             var results = crawler.Start();
 
-            Console.WriteLine("Crawling done.");
+            _logger.LogInformation("Crawling done.");
             if (!string.IsNullOrWhiteSpace(appSettings.OutputFile))
             {
                 WriteCsv(results, appSettings.OutputFile);
             }
+        }
+
+        private static ILogger CreateLogger(bool debugLogging)
+        {
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .AddFilter("Microsoft", LogLevel.Warning)
+                    .AddFilter("System", LogLevel.Warning)
+                    .AddFilter("Crawler", debugLogging ? LogLevel.Debug : LogLevel.Information)
+                    .AddConsole();
+            });
+            ILogger logger = loggerFactory.CreateLogger<Program>();
+            
+            return logger;
         }
 
         private static void TimerCallback(object state)
@@ -76,9 +89,9 @@ namespace Crawler
 
         private static void StopCrawler(WebCrawler crawler)
         {
-            ColorConsole.WriteLine("*** Stopping crawler **** ", ConsoleColor.Yellow);
+            _logger.LogInformation("*** Stopping crawler **** ", ConsoleColor.Yellow);
             crawler.Stop();
-            ColorConsole.WriteLine("*** Crawler stop signaled **** ", ConsoleColor.Yellow);
+            _logger.LogInformation("*** Crawler stop signaled **** ", ConsoleColor.Yellow);
         }
 
         private static void ShowHelp()
@@ -97,7 +110,7 @@ namespace Crawler
             var duration = DateTime.UtcNow - _startTime;
             var linksPerSecond = duration.TotalSeconds == 0 ? 0 : _linksCrawled / duration.TotalSeconds;
 
-            ColorConsole.WriteLine(
+            _logger.LogInformation(
                 $"-- Crawled: {crawlResult.Url}\n\t Result : {crawlResult.StatusCode}, Links: {crawlResult.Links.Count} - Total crawled: {_linksCrawled} in {duration} ({linksPerSecond} links/s) ",
                 GetColorForStatusCode(crawlResult.StatusCode));
         }
@@ -118,8 +131,8 @@ namespace Crawler
 
         private static void WriteCsv(IList<LinkCrawlResult> results, string filename)
         {
-            Console.WriteLine("Writing to csv file");
-            Console.WriteLine($"   Results : {results.Count}");
+            _logger.LogInformation("Writing to csv file");
+            _logger.LogInformation($"   Results : {results.Count}");
 
             if (File.Exists(filename))
             {
@@ -129,7 +142,7 @@ namespace Crawler
             results.ToList().ForEach(r => 
                 File.AppendAllText(filename, $"{r.StatusCode},\"{r.Url}\",\"{r.ReferrerUrl}\",\"{r.ExceptionMessage}\"\n"));
 
-            Console.WriteLine("Done!");
+            _logger.LogInformation("Done writing CSV file.");
         }
     }
 }

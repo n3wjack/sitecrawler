@@ -1,4 +1,5 @@
 ﻿using Crawler.AppCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net.Http;
 using System.Threading;
@@ -12,6 +13,7 @@ namespace Crawler.Tests
     public abstract class WebCrawlerTest
     {
         protected Mock<IHttpClient> HttpClientMock { get; set; } = new Mock<IHttpClient>();
+        protected Mock<ILogger> LoggerMock { get; set; } = new Mock<ILogger>();
 
         /// <summary>
         /// Sets up the HTTP requests for a given URL for the WebCrawler.
