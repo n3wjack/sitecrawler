@@ -14,7 +14,7 @@ _\( )/_            /(_)\      .--'/()\'--.    | /  \ |   /(O)\
        | \__/ |
 
 Usage: 
-    dotnet crawler.dll [--url url] [--outputfile filename] [--minutes X] [--paralleltasks X] [--requestdelay X] [--debuglogging true]
+    crawler.exe [--url url] [--outputfile filename] [--minutes X] [--paralleltasks X] [--requestdelay X] [--debuglogging true]
 
 Example: crawler.exe --url https://awesomesite.com/ 
 

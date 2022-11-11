@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crawler", "Crawler\Crawler.csproj", "{23B32898-F40D-4D7F-A50A-4BF04E8F7CF3}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrawlSite", "CrawlSite\CrawlSite.csproj", "{88865A98-ABF9-4D1C-9D74-4A0AED5B6351}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crawler.Tests", "Crawler.Tests\Crawler.Tests.csproj", "{31FB9D74-7A01-4380-9B7A-0F2F269B27B6}"
 EndProject
@@ -13,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrawlSite", "CrawlSite\CrawlSite.csproj", "{897CDA88-BEDE-4EC1-88F3-7093CC0E16FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,14 +24,14 @@ Global
 		{23B32898-F40D-4D7F-A50A-4BF04E8F7CF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23B32898-F40D-4D7F-A50A-4BF04E8F7CF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23B32898-F40D-4D7F-A50A-4BF04E8F7CF3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{88865A98-ABF9-4D1C-9D74-4A0AED5B6351}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{88865A98-ABF9-4D1C-9D74-4A0AED5B6351}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{88865A98-ABF9-4D1C-9D74-4A0AED5B6351}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{88865A98-ABF9-4D1C-9D74-4A0AED5B6351}.Release|Any CPU.Build.0 = Release|Any CPU
 		{31FB9D74-7A01-4380-9B7A-0F2F269B27B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{31FB9D74-7A01-4380-9B7A-0F2F269B27B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31FB9D74-7A01-4380-9B7A-0F2F269B27B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31FB9D74-7A01-4380-9B7A-0F2F269B27B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{897CDA88-BEDE-4EC1-88F3-7093CC0E16FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{897CDA88-BEDE-4EC1-88F3-7093CC0E16FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{897CDA88-BEDE-4EC1-88F3-7093CC0E16FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{897CDA88-BEDE-4EC1-88F3-7093CC0E16FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
