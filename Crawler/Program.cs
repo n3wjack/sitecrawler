@@ -139,6 +139,9 @@ namespace Crawler
                 File.Delete(filename);
             }
 
+            // Add the header.
+            File.AppendAllText(filename, "StatusCode,Url,ReferrerUrl,ExceptionMessage\n");
+
             results.ToList().ForEach(r => 
                 File.AppendAllText(filename, $"{r.StatusCode},\"{r.Url}\",\"{r.ReferrerUrl}\",\"{r.ExceptionMessage}\"\n"));
 
