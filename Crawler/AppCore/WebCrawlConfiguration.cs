@@ -15,5 +15,13 @@ namespace Crawler.AppCore
         /// Gets or sets the number of task to use to crawl simultaneously.
         /// </summary>
         public int ParallelTasks { get; set; } = 10;
+        /// <summary>
+        /// Gets or sets the username for basic authentication.
+        /// </summary>
+        public string Username { get; set; } = string.Empty;
+        /// <summary>
+        /// Gets or sets the password for basic authentication.
+        /// </summary>
+        public string Password { get; set; } = string.Empty;
     }
 }

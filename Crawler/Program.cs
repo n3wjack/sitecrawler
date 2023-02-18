@@ -42,6 +42,8 @@ namespace Crawler
                 Uri = new Uri(appSettings.Url),
                 RequestWaitDelay = appSettings.RequestDelay,
                 ParallelTasks = appSettings.ParallelTasks,
+                Username = appSettings.Username,
+                Password = appSettings.Password
             }, _logger);
             crawler.LinkCrawled += Crawler_LinkCrawled;
 

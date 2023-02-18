@@ -1,5 +1,6 @@
 ﻿using Crawler.AppCore;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,12 +11,19 @@ namespace Crawler.Infrastructure
     {
         private HttpClient _client;
 
-        public HttpClientAdapter()
+        public HttpClientAdapter(string username, string password)
         {
             var clientHandler = new HttpClientHandler
             {
-                AllowAutoRedirect = false
+                AllowAutoRedirect = false,
             };
+
+            if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+            {
+                clientHandler.PreAuthenticate = true;
+                clientHandler.Credentials = new NetworkCredential(username, password);
+            }
+
             _client = new HttpClient(clientHandler);
         }
 

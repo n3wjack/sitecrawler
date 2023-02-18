@@ -112,7 +112,7 @@ namespace Crawler.AppCore
                         _logger.LogDebug($"=== Task {taskNumber} waiting...");
                     }
 
-                    // Wait a bit to make sure other tasks processing links have the change to add new links to the queue.
+                    // Wait a bit to make sure other tasks processing links have the chance to add new links to the queue.
                     await Task.Delay(_configuration.RetryDelay);
                 }
             } while (failedDequeues <= 3 && !_cancellationTokenSource.Token.IsCancellationRequested);

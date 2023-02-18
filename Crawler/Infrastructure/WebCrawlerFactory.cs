@@ -7,12 +7,7 @@ namespace Crawler.Infrastructure
     {
         public static WebCrawler Create(WebCrawlConfiguration configuration, ILogger logger)
         {
-            return new WebCrawler(configuration, DefaultHttpClientFactory, logger);
-        }
-
-        private static IHttpClient DefaultHttpClientFactory()
-        {
-            return new HttpClientAdapter();
+            return new WebCrawler(configuration, () => new HttpClientAdapter(configuration.Username, configuration.Password), logger);
         }
     }
 }
