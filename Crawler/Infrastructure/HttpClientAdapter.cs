@@ -15,7 +15,7 @@ namespace Crawler.Infrastructure
         {
             var clientHandler = new HttpClientHandler
             {
-                AllowAutoRedirect = false,
+                AllowAutoRedirect = false
             };
 
             if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
