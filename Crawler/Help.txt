@@ -28,5 +28,6 @@ Options:
     --password      Password to use when the site is using basic authentication (optional).
     --debugLogging  Activate debug logging (optional).
  
-(ascii art by jgs)
+Project link: https://github.com/n3wjack/sitecrawler/
 
+(ascii art by jgs)
