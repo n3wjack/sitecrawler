@@ -49,7 +49,7 @@ There are 3 way to build the project.
 ## Testing
 
 There's a `CrawlSite` web site project which you can run to test the basic functionality of the crawler on. It contains edge cases, bad links, and binary files.
-Run the project from VS, and let the crawler do it's thing on it.
+Run the project from VS by starting with multiple startup projects, and let the crawler do it's thing on it.
 
 It should:
 - Crawl all links.
