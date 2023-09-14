@@ -37,13 +37,14 @@ namespace Crawler
                 return;
             }
 
-            var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration 
-            { 
+            var crawler = WebCrawlerFactory.Create(new WebCrawlConfiguration
+            {
                 Uri = new Uri(appSettings.Url),
                 RequestWaitDelay = appSettings.RequestDelay,
                 ParallelTasks = appSettings.ParallelTasks,
                 Username = appSettings.Username,
-                Password = appSettings.Password
+                Password = appSettings.Password,
+                CustomUserAgent = appSettings.UserAgent
             }, _logger);
             crawler.LinkCrawled += Crawler_LinkCrawled;
 
@@ -147,7 +148,7 @@ namespace Crawler
             results.ToList().ForEach(r => 
                 File.AppendAllText(filename, $"{r.StatusCode},\"{r.Url}\",\"{r.ReferrerUrl}\",\"{r.ExceptionMessage}\"\n"));
 
-            _logger.LogInformation("Done writing CSV file.");
+            _logger.LogInformation($"Done writing CSV file {filename}.");
         }
     }
 }

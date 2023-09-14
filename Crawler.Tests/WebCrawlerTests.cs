@@ -121,7 +121,7 @@ namespace Crawler.Tests
         [Fact]
         public void ThenThereIsOneResult()
         {
-            Assert.Equal(1, Result.Count);
+            Assert.Single(Result);
         }
     }
 

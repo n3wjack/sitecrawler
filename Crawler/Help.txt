@@ -26,6 +26,7 @@ Options:
     --requestdelay  Number of milliseconds to wait after a request, to throttle request (optional). Default is 0.
     --username      Username to use when the site is using basic authentication (optional).
     --password      Password to use when the site is using basic authentication (optional).
+    --useragent     A custom user agent string to use (optional).
     --debugLogging  Activate debug logging (optional).
  
 Project link: https://github.com/n3wjack/sitecrawler/

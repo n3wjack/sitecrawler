@@ -11,7 +11,7 @@ namespace Crawler.Infrastructure
     {
         private HttpClient _client;
 
-        public HttpClientAdapter(string username, string password)
+        public HttpClientAdapter(string username, string password, string customUserAgent = null)
         {
             var clientHandler = new HttpClientHandler
             {
@@ -25,6 +25,11 @@ namespace Crawler.Infrastructure
             }
 
             _client = new HttpClient(clientHandler);
+
+            if (!string.IsNullOrWhiteSpace(customUserAgent))
+            {
+                _client.DefaultRequestHeaders.Add("User-Agent", customUserAgent);
+            }
         }
 
         public void Dispose()

@@ -7,7 +7,7 @@ namespace Crawler.Infrastructure
     {
         public static WebCrawler Create(WebCrawlConfiguration configuration, ILogger logger)
         {
-            return new WebCrawler(configuration, () => new HttpClientAdapter(configuration.Username, configuration.Password), logger);
+            return new WebCrawler(configuration, () => new HttpClientAdapter(configuration.Username, configuration.Password, configuration.CustomUserAgent), logger);
         }
     }
 }

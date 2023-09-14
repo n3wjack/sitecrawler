@@ -23,5 +23,10 @@ namespace Crawler.AppCore
         /// Gets or sets the password for basic authentication.
         /// </summary>
         public string Password { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a custom user agent value to use.
+        /// </summary>
+        public string CustomUserAgent { get; set; } = string.Empty;
     }
 }

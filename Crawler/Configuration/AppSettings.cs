@@ -19,6 +19,7 @@ namespace Crawler.Configuration
         public int RequestDelay { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public string UserAgent { get; set; }
         public bool DebugLogging { get; set; }
         public bool ShowHelp => _args.ToList().Any(s => _helpSwitches.Contains(s.ToLowerInvariant()));
         public bool IsValid => !string.IsNullOrWhiteSpace(Url);
