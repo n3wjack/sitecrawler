@@ -30,6 +30,9 @@ Run the executable with `/?` to see help on the command line parameters. This wi
         --minutes       Time in minutes to crawl the given site (optional).
         --paralleltasks Number of tasks to use to crawl links in parallel (optional). Default is 10.
         --requestdelay  Number of milliseconds to wait after a request, to throttle request (optional). Default is 0.
+        --username      Username to use when the site is using basic authentication (optional).
+        --password      Password to use when the site is using basic authentication (optional).
+        --useragent     A custom user agent string to use (optional).
         --debugLogging  Activate debug logging (optional).
 
 Simple example: 
