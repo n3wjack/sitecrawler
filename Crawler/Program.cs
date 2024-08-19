@@ -92,9 +92,9 @@ namespace Crawler
 
         private static void StopCrawler(WebCrawler crawler)
         {
-            _logger.LogInformation("*** Stopping crawler **** ", ConsoleColor.Yellow);
+            _logger.LogInformation("*** Stopping crawler **** ");
             crawler.Stop();
-            _logger.LogInformation("*** Crawler stop signaled **** ", ConsoleColor.Yellow);
+            _logger.LogInformation("*** Crawler stop signaled **** ");
         }
 
         private static void ShowHelp()
