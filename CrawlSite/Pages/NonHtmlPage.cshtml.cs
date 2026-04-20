@@ -7,7 +7,7 @@ namespace CrawlSite.Pages
         public void OnGet()
         {
             // Return as plain text, to see if the crawler skips it for link parsing.
-            HttpContext.Response.Headers.Add("content-type", "text/plain");
+            HttpContext.Response.Headers.Append("content-type", "text/plain");
         }
     }
 }
